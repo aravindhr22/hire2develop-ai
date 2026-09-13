@@ -451,3 +451,143 @@ st.caption(
     "AI supports HR decision-making; final decisions remain "
     "with human HR professionals."
 )
+# ============================================================
+# STAGE 4 - AI PERSONALIZED ONBOARDING
+# ============================================================
+
+st.divider()
+
+st.markdown("## 🤝 AI-Personalized Onboarding")
+
+st.write(
+    "Generate a personalized onboarding plan based on the candidate's "
+    "job requirements, resume, interview insights and AI analysis."
+)
+
+if "analysis" in st.session_state:
+
+    if st.button(
+        "🚀 Generate Onboarding Plan",
+        type="primary",
+        use_container_width=True
+    ):
+
+        onboarding_prompt = f"""
+You are an AI assistant supporting Human Resources professionals.
+
+Create a personalized employee onboarding plan using the information below.
+
+IMPORTANT:
+- The plan must be practical and relevant to the specific job.
+- Use the candidate's strengths and skill gaps from the AI analysis.
+- Do not make assumptions about sensitive personal characteristics.
+- AI supports HR and managers; humans remain responsible for final decisions.
+
+========================
+JOB DESCRIPTION
+========================
+
+{job_text}
+
+========================
+CANDIDATE RESUME
+========================
+
+{resume_text}
+
+========================
+INTERVIEW / ASSESSMENT
+========================
+
+{interview_results}
+
+========================
+AI CANDIDATE ANALYSIS
+========================
+
+{st.session_state["analysis"]}
+
+========================
+CREATE THE ONBOARDING PLAN
+========================
+
+Provide the following sections:
+
+1. ONBOARDING OBJECTIVE
+Explain the main objective for this employee's onboarding.
+
+2. FIRST WEEK
+Give practical activities for the first week.
+
+3. FIRST 30 DAYS
+Give the most important learning and work priorities.
+
+4. DAYS 31-60
+Explain what responsibilities and skills should be developed.
+
+5. DAYS 61-90
+Explain how the employee should move toward independent performance.
+
+6. TRAINING PRIORITIES
+Recommend specific training areas based on identified skill gaps.
+
+7. STAKEHOLDER CONNECTIONS
+Suggest the key teams or people the employee should interact with.
+
+8. EARLY PERFORMANCE GOALS
+Give 4-5 measurable and realistic goals.
+
+9. MANAGER CHECK-INS
+Suggest an appropriate schedule for manager feedback and progress reviews.
+
+10. PERSONALIZED DEVELOPMENT FOCUS
+Explain how the onboarding plan addresses the candidate's specific strengths
+and development areas.
+
+Keep the answer structured, practical and suitable for an HR demonstration.
+"""
+
+        try:
+
+            with st.spinner("🤖 AI is creating the personalized onboarding plan..."):
+
+                onboarding_response = client.models.generate_content(
+                    model="gemini-3.5-flash-lite",
+                    contents=onboarding_prompt
+                )
+
+                st.session_state["onboarding"] = onboarding_response.text
+
+        except Exception as e:
+
+            st.error(f"Onboarding plan generation failed: {e}")
+
+else:
+
+    st.info(
+        "Please analyze the candidate first. "
+        "The onboarding plan will use the AI candidate analysis."
+    )
+
+
+# ============================================================
+# DISPLAY ONBOARDING PLAN
+# ============================================================
+
+if "onboarding" in st.session_state:
+
+    st.divider()
+
+    st.markdown("## 📋 Personalized 90-Day Onboarding Plan")
+
+    st.markdown(st.session_state["onboarding"])
+
+    st.success(
+        "✅ Onboarding plan generated using the candidate profile, "
+        "job requirements and AI skill-gap insights."
+    )
+
+    st.caption(
+        "AI provides onboarding recommendations. "
+        "HR and the reporting manager should review and customize the plan."
+    )
