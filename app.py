@@ -239,7 +239,7 @@ qualified human HR professionals.
 """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         contents=prompt
     )
 
