@@ -596,3 +596,162 @@ if "onboarding" in st.session_state:
         "AI provides onboarding recommendations. "
         "HR and the reporting manager should review and customize the plan."
     )
+# ============================================================
+# STAGE 5 - AI SKILL-GAP ANALYSIS
+# ============================================================
+
+st.divider()
+
+st.markdown("## 🎯 AI Skill-Gap Analysis")
+
+st.write(
+    "Identify the candidate's current skill levels, compare them with "
+    "job requirements, and prioritize the areas that need development."
+)
+
+if "analysis" in st.session_state:
+
+    if st.button(
+        "🔍 Analyze Skill Gaps",
+        type="primary",
+        use_container_width=True
+    ):
+
+        try:
+
+            # Extract the uploaded documents again
+            skillgap_job_text = extract_text(job_description)
+            skillgap_resume_text = extract_text(resume)
+
+            skillgap_prompt = f"""
+You are an AI-powered Talent Development assistant supporting HR professionals.
+
+Perform a detailed skill-gap analysis for the candidate using the Job
+Description, Resume, Interview/Assessment Results and AI Candidate Analysis.
+
+IMPORTANT:
+- Compare the skills actually required for the job with the candidate's
+  demonstrated skills.
+- Do not assume skills that are not supported by the information provided.
+- Do not use sensitive personal characteristics.
+- AI provides recommendations; HR and managers make the final decisions.
+
+========================
+JOB DESCRIPTION
+========================
+{skillgap_job_text}
+
+========================
+CANDIDATE RESUME
+========================
+{skillgap_resume_text}
+
+========================
+INTERVIEW / ASSESSMENT
+========================
+{interview_results}
+
+========================
+AI CANDIDATE ANALYSIS
+========================
+{st.session_state["analysis"]}
+
+========================
+SKILL-GAP ANALYSIS
+========================
+
+Analyze the candidate against the job requirements.
+
+For each important skill, provide:
+
+- Skill
+- Required Level
+- Current Level
+- Gap Level
+- Priority
+- Development Recommendation
+
+Use these levels where appropriate:
+
+Required Level:
+Beginner / Intermediate / Advanced
+
+Current Level:
+Limited / Basic / Moderate / Strong / Advanced
+
+Gap Level:
+Low / Medium / High
+
+Priority:
+Low / Medium / High
+
+Then provide these sections:
+
+1. SKILL-GAP SUMMARY
+Give a short overall assessment.
+
+2. STRENGTHS
+List the skills where the candidate already meets or exceeds the requirement.
+
+3. HIGH-PRIORITY GAPS
+Identify the most important skills that require development.
+
+4. MEDIUM-PRIORITY GAPS
+Identify skills that should be improved but are less urgent.
+
+5. DEVELOPMENT RECOMMENDATIONS
+Recommend practical ways to improve the identified gaps.
+
+6. READINESS ASSESSMENT
+Explain whether the candidate appears ready for the role immediately,
+ready with targeted development, or requires significant development.
+
+7. HR ACTION POINTS
+Give practical next steps for HR and the reporting manager.
+
+Make the analysis clear, structured and suitable for an HR presentation.
+"""
+
+            with st.spinner(
+                "🤖 AI is analyzing the candidate's skill gaps..."
+            ):
+
+                skillgap_response = client.models.generate_content(
+                    model="gemini-3.5-flash-lite",
+                    contents=skillgap_prompt
+                )
+
+                st.session_state["skillgap"] = skillgap_response.text
+
+        except Exception as e:
+
+            st.error(f"Skill-gap analysis failed: {e}")
+
+else:
+
+    st.info(
+        "Please analyze the candidate first. "
+        "The skill-gap analysis will use the AI candidate analysis."
+    )
+
+
+# ============================================================
+# DISPLAY SKILL-GAP ANALYSIS
+# ============================================================
+
+if "skillgap" in st.session_state:
+
+    st.divider()
+
+    st.markdown("## 📊 Skill-Gap Analysis Result")
+
+    st.markdown(st.session_state["skillgap"])
+
+    st.success(
+        "✅ Skill-gap analysis generated successfully."
+    )
+
+    st.caption(
+        "AI identifies potential development needs. "
+        "HR and managers should validate the findings before taking action."
+    )
