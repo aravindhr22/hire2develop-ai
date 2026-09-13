@@ -382,12 +382,15 @@ if st.button(
             "🤖 AI is analyzing the candidate..."
         ):
 
-            job_text = extract_text(job_description)
+job_text = extract_text(job_description)
+resume_text = extract_text(resume)
 
-            resume_text = extract_text(resume)
+# Store candidate source data for history
+st.session_state["job_text"] = job_text
+st.session_state["resume_text"] = resume_text
+st.session_state["interview_results"] = interview_results
 
-            if not job_text:
-
+if not job_text:
                 st.error(
                     "Could not extract text from the Job Description."
                 )
