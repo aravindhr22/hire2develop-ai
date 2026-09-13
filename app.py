@@ -292,16 +292,29 @@ if "candidate_form_version" not in st.session_state:
 
 def reset_candidate():
     """Clear the current candidate and prepare a completely fresh form."""
+
+    # Clear normal candidate/session data.
     for key in [
-        "candidate_id", "candidate_name", "position",
-        "job_text", "resume_text", "interview_results",
-        "analysis", "onboarding", "skillgap", "learning",
-        "progress_review", "saved_progress", "development_progress",
-        "history_selector"
+        "candidate_id",
+        "job_text",
+        "resume_text",
+        "analysis",
+        "onboarding",
+        "skillgap",
+        "learning",
+        "progress_review",
+        "saved_progress",
+        "development_progress"
     ]:
         st.session_state.pop(key, None)
 
-    # Changing the uploader key guarantees that old uploaded files disappear.
+    # These are Streamlit widget keys. Setting them to blank is more reliable
+    # than deleting them when a button callback is used.
+    st.session_state["candidate_name"] = ""
+    st.session_state["position"] = ""
+    st.session_state["interview_results"] = ""
+
+    # Change the uploader keys so the old uploaded files are removed.
     st.session_state["candidate_form_version"] += 1
 
 
@@ -390,12 +403,13 @@ if supabase is not None:
         else:
             st.sidebar.info("No saved candidates yet.")
 
-        st.sidebar.button(
+        if st.sidebar.button(
             "➕ Start New Candidate",
             use_container_width=True,
-            on_click=reset_candidate,
             key="start_new_candidate_button"
-        )
+        ):
+            reset_candidate()
+            st.rerun()
 
     except Exception as e:
         st.sidebar.error(f"Could not load candidate history: {e}")
