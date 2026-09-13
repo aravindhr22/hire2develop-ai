@@ -750,7 +750,310 @@ if "skillgap" in st.session_state:
     st.success(
         "✅ Skill-gap analysis generated successfully."
     )
+# ============================================================
+# STAGE 6 - AI LEARNING & DEVELOPMENT PLAN
+# ============================================================
 
+st.divider()
+
+st.markdown("## 📚 AI Learning & Development Plan")
+
+st.write(
+    "Create a personalized learning path based on the candidate's "
+    "identified skill gaps and development priorities."
+)
+
+if "skillgap" in st.session_state:
+
+    if st.button(
+        "📚 Generate Learning Plan",
+        type="primary",
+        use_container_width=True
+    ):
+
+        try:
+
+            learning_prompt = f"""
+You are an AI-powered Learning and Development assistant supporting HR
+professionals.
+
+Create a personalized employee learning and development plan using the
+candidate's Skill-Gap Analysis and Candidate Analysis.
+
+IMPORTANT:
+- Prioritize learning based on the identified skill gaps.
+- Focus on practical workplace development.
+- Do not use sensitive personal characteristics.
+- AI provides recommendations; HR and managers should validate the plan.
+
+========================
+AI CANDIDATE ANALYSIS
+========================
+{st.session_state["analysis"]}
+
+========================
+SKILL-GAP ANALYSIS
+========================
+{st.session_state["skillgap"]}
+
+========================
+CREATE THE LEARNING PLAN
+========================
+
+Provide the following:
+
+1. DEVELOPMENT OBJECTIVE
+Explain the main development objective.
+
+2. PRIORITY SKILLS
+Identify the top skills that should be developed first.
+
+3. LEARNING ROADMAP
+Create a structured learning roadmap.
+
+For each learning area provide:
+- Skill
+- Learning objective
+- Recommended learning activity
+- Practical workplace activity
+- Suggested duration
+- Expected outcome
+
+4. 30-DAY LEARNING PLAN
+Give specific learning activities for the first 30 days.
+
+5. 60-DAY LEARNING PLAN
+Give development activities for days 31-60.
+
+6. 90-DAY LEARNING PLAN
+Give development activities for days 61-90.
+
+7. PRACTICAL PROJECTS
+Suggest practical projects that can help the employee apply the new skills.
+
+8. MANAGER / MENTOR SUPPORT
+Explain how the manager or mentor can support development.
+
+9. EXPECTED OUTCOMES
+Describe what the employee should be able to do after completing the plan.
+
+Keep the plan practical, measurable and suitable for an HR demonstration.
+"""
+
+            with st.spinner(
+                "🤖 AI is creating the personalized learning plan..."
+            ):
+
+                learning_response = client.models.generate_content(
+                    model="gemini-3.5-flash-lite",
+                    contents=learning_prompt
+                )
+
+                st.session_state["learning"] = learning_response.text
+
+        except Exception as e:
+
+            st.error(f"Learning plan generation failed: {e}")
+
+else:
+
+    st.info(
+        "Please complete the Skill-Gap Analysis first."
+    )
+
+
+# ============================================================
+# DISPLAY LEARNING PLAN
+# ============================================================
+
+if "learning" in st.session_state:
+
+    st.divider()
+
+    st.markdown("## 🗺️ Personalized Learning Roadmap")
+
+    st.markdown(st.session_state["learning"])
+
+    st.success(
+        "✅ Personalized learning and development plan generated successfully."
+    )
+
+    st.caption(
+        "HR and managers should review and customize the recommended "
+        "learning activities based on organizational requirements."
+    )
+
+
+# ============================================================
+# STAGE 7 - EMPLOYEE PROGRESS TRACKING
+# ============================================================
+
+st.divider()
+
+st.markdown("## 📈 Employee Development Progress Tracking")
+
+st.write(
+    "Track progress against the personalized development plan and "
+    "identify areas requiring additional support."
+)
+
+if "learning" in st.session_state:
+
+    st.markdown("### 🎯 Update Development Progress")
+
+    progress = st.slider(
+        "Overall Development Progress (%)",
+        min_value=0,
+        max_value=100,
+        value=25,
+        step=5
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        completed_training = st.number_input(
+            "Completed Learning Activities",
+            min_value=0,
+            max_value=20,
+            value=1,
+            step=1
+        )
+
+    with col2:
+
+        total_training = st.number_input(
+            "Total Planned Learning Activities",
+            min_value=1,
+            max_value=20,
+            value=5,
+            step=1
+        )
+
+    manager_feedback = st.text_area(
+        "Manager / Mentor Feedback",
+        placeholder="Enter feedback about the employee's development..."
+    )
+
+    if st.button(
+        "📊 Generate Progress Review",
+        type="primary",
+        use_container_width=True
+    ):
+
+        try:
+
+            progress_prompt = f"""
+You are an AI-powered Talent Development assistant.
+
+Evaluate an employee's development progress using the information below.
+
+========================
+LEARNING & DEVELOPMENT PLAN
+========================
+{st.session_state["learning"]}
+
+========================
+CURRENT PROGRESS
+========================
+Overall Progress: {progress}%
+
+Completed Learning Activities:
+{completed_training}
+
+Total Planned Learning Activities:
+{total_training}
+
+Manager / Mentor Feedback:
+{manager_feedback}
+
+========================
+CREATE PROGRESS REVIEW
+========================
+
+Provide:
+
+1. PROGRESS SUMMARY
+Give a concise assessment of current development progress.
+
+2. COMPLETION STATUS
+Comment on the employee's learning activity completion.
+
+3. AREAS OF PROGRESS
+Identify areas where the employee is improving.
+
+4. AREAS REQUIRING ATTENTION
+Identify areas that still need development.
+
+5. RECOMMENDED NEXT ACTIONS
+Suggest practical next steps.
+
+6. MANAGER ACTION
+Suggest what the manager or mentor should do next.
+
+7. DEVELOPMENT STATUS
+Classify the employee's current development status as:
+
+- On Track
+- Needs Attention
+- Requires Additional Support
+
+Explain the reason for the classification.
+
+Do not make decisions based on sensitive personal characteristics.
+AI provides recommendations and HR/managers remain responsible for
+development decisions.
+"""
+
+            with st.spinner(
+                "🤖 AI is evaluating development progress..."
+            ):
+
+                progress_response = client.models.generate_content(
+                    model="gemini-3.5-flash-lite",
+                    contents=progress_prompt
+                )
+
+                st.session_state["progress_review"] = progress_response.text
+
+        except Exception as e:
+
+            st.error(f"Progress review failed: {e}")
+
+else:
+
+    st.info(
+        "Complete the Learning & Development Plan first to enable progress tracking."
+    )
+
+
+# ============================================================
+# DISPLAY PROGRESS REVIEW
+# ============================================================
+
+if "progress_review" in st.session_state:
+
+    st.divider()
+
+    st.markdown("## 📊 AI Development Progress Review")
+
+    st.progress(progress / 100)
+
+    st.markdown(
+        f"### Current Progress: {progress}%"
+    )
+
+    st.markdown(st.session_state["progress_review"])
+
+    st.success(
+        "✅ Development progress reviewed successfully."
+    )
+
+    st.caption(
+        "AI provides progress insights and recommendations. "
+        "HR and managers should validate the review before taking action."
+    )
     st.caption(
         "AI identifies potential development needs. "
         "HR and managers should validate the findings before taking action."
