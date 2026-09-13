@@ -460,7 +460,7 @@ st.divider()
 st.markdown("## 🤝 AI-Personalized Onboarding")
 
 st.write(
-    "Generate a personalized onboarding plan based on the candidate's "
+    "Generate a personalized onboarding plan using the candidate's "
     "job requirements, resume, interview insights and AI analysis."
 )
 
@@ -472,46 +472,48 @@ if "analysis" in st.session_state:
         use_container_width=True
     ):
 
-        onboarding_prompt = f"""
+        try:
+
+            # Extract the uploaded documents again
+            onboarding_job_text = extract_text(job_description)
+            onboarding_resume_text = extract_text(resume)
+
+            onboarding_prompt = f"""
 You are an AI assistant supporting Human Resources professionals.
 
-Create a personalized employee onboarding plan using the information below.
+Create a personalized 90-day employee onboarding plan using the information below.
 
 IMPORTANT:
-- The plan must be practical and relevant to the specific job.
-- Use the candidate's strengths and skill gaps from the AI analysis.
-- Do not make assumptions about sensitive personal characteristics.
+- Make the plan specific to the job and candidate.
+- Use the candidate's strengths and skill gaps.
+- Do not use sensitive personal characteristics.
 - AI supports HR and managers; humans remain responsible for final decisions.
 
 ========================
 JOB DESCRIPTION
 ========================
-
-{job_text}
+{onboarding_job_text}
 
 ========================
 CANDIDATE RESUME
 ========================
-
-{resume_text}
+{onboarding_resume_text}
 
 ========================
 INTERVIEW / ASSESSMENT
 ========================
-
 {interview_results}
 
 ========================
 AI CANDIDATE ANALYSIS
 ========================
-
 {st.session_state["analysis"]}
 
 ========================
 CREATE THE ONBOARDING PLAN
 ========================
 
-Provide the following sections:
+Provide these sections:
 
 1. ONBOARDING OBJECTIVE
 Explain the main objective for this employee's onboarding.
@@ -520,36 +522,35 @@ Explain the main objective for this employee's onboarding.
 Give practical activities for the first week.
 
 3. FIRST 30 DAYS
-Give the most important learning and work priorities.
+Give important learning and work priorities.
 
 4. DAYS 31-60
-Explain what responsibilities and skills should be developed.
+Explain responsibilities and skills to be developed.
 
 5. DAYS 61-90
 Explain how the employee should move toward independent performance.
 
 6. TRAINING PRIORITIES
-Recommend specific training areas based on identified skill gaps.
+Recommend training areas based on the candidate's skill gaps.
 
 7. STAKEHOLDER CONNECTIONS
-Suggest the key teams or people the employee should interact with.
+Suggest important teams or people the employee should interact with.
 
 8. EARLY PERFORMANCE GOALS
 Give 4-5 measurable and realistic goals.
 
 9. MANAGER CHECK-INS
-Suggest an appropriate schedule for manager feedback and progress reviews.
+Suggest a schedule for manager feedback and progress reviews.
 
 10. PERSONALIZED DEVELOPMENT FOCUS
-Explain how the onboarding plan addresses the candidate's specific strengths
-and development areas.
+Explain how this plan addresses the candidate's strengths and development areas.
 
-Keep the answer structured, practical and suitable for an HR demonstration.
+Keep the answer practical, structured and suitable for an HR demonstration.
 """
 
-        try:
-
-            with st.spinner("🤖 AI is creating the personalized onboarding plan..."):
+            with st.spinner(
+                "🤖 AI is creating the personalized onboarding plan..."
+            ):
 
                 onboarding_response = client.models.generate_content(
                     model="gemini-3.5-flash-lite",
@@ -583,8 +584,12 @@ if "onboarding" in st.session_state:
     st.markdown(st.session_state["onboarding"])
 
     st.success(
-        "✅ Onboarding plan generated using the candidate profile, "
-        "job requirements and AI skill-gap insights."
+        "✅ Personalized onboarding plan generated successfully."
+    )
+
+    st.caption(
+        "AI provides onboarding recommendations. "
+        "HR and the reporting manager should review and customize the plan."
     )
 
     st.caption(
