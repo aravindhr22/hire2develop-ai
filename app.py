@@ -1592,3 +1592,28 @@ else:
     st.info(
         "Complete Candidate Analysis first to enable the HR Report."
     )
+# ============================================================
+# SUPABASE DATABASE CONNECTION TEST
+# ============================================================
+
+from supabase import create_client
+
+try:
+    supabase = create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_KEY"]
+    )
+
+    # Test database connection
+    test_response = (
+        supabase
+        .table("candidates")
+        .select("id")
+        .limit(1)
+        .execute()
+    )
+
+    st.success("✅ Supabase database connected successfully!")
+
+except Exception as e:
+    st.error(f"❌ Supabase connection error: {e}")
