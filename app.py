@@ -285,6 +285,26 @@ st.divider()
 # CANDIDATE HISTORY SIDEBAR
 # ============================================================
 
+# Version number used to force fresh upload boxes when starting a new candidate.
+if "candidate_form_version" not in st.session_state:
+    st.session_state["candidate_form_version"] = 0
+
+
+def reset_candidate():
+    """Clear the current candidate and prepare a completely fresh form."""
+    for key in [
+        "candidate_id", "candidate_name", "position",
+        "job_text", "resume_text", "interview_results",
+        "analysis", "onboarding", "skillgap", "learning",
+        "progress_review", "saved_progress", "development_progress",
+        "history_selector"
+    ]:
+        st.session_state.pop(key, None)
+
+    # Changing the uploader key guarantees that old uploaded files disappear.
+    st.session_state["candidate_form_version"] += 1
+
+
 if supabase is not None:
     st.sidebar.markdown("## 🗂 Candidate History")
 
@@ -356,8 +376,8 @@ if supabase is not None:
                     st.session_state["saved_progress"] = int(saved_progress)
                     st.session_state["development_progress"] = int(saved_progress)
 
-                    st.session_state.pop("job_description", None)
-                    st.session_state.pop("resume", None)
+                    # Force fresh upload boxes while keeping the loaded candidate data.
+                    st.session_state["candidate_form_version"] += 1
 
                     st.rerun()
                 else:
@@ -370,19 +390,12 @@ if supabase is not None:
         else:
             st.sidebar.info("No saved candidates yet.")
 
-        if st.sidebar.button(
+        st.sidebar.button(
             "➕ Start New Candidate",
-            use_container_width=True
-        ):
-            for key in [
-                "candidate_id", "candidate_name", "position",
-                "job_text", "resume_text", "interview_results",
-                "analysis", "onboarding", "skillgap", "learning",
-                "progress_review", "saved_progress", "development_progress",
-                "job_description", "resume"
-            ]:
-                st.session_state.pop(key, None)
-            st.rerun()
+            use_container_width=True,
+            on_click=reset_candidate,
+            key="start_new_candidate_button"
+        )
 
     except Exception as e:
         st.sidebar.error(f"Could not load candidate history: {e}")
@@ -444,7 +457,7 @@ with col1:
     job_description = st.file_uploader(
         "Upload Job Description",
         type=["pdf", "docx", "txt"],
-        key="job_description"
+        key=f"job_description_{st.session_state['candidate_form_version']}"
     )
 
 
@@ -455,7 +468,7 @@ with col2:
     resume = st.file_uploader(
         "Upload Candidate Resume",
         type=["pdf", "docx", "txt"],
-        key="resume"
+        key=f"resume_{st.session_state['candidate_form_version']}"
     )
 
 
@@ -474,7 +487,8 @@ interview_results = st.text_area(
         "Overall observation: Good recruitment experience "
         "but needs improvement in analytics."
     ),
-    height=180
+    height=180,
+    key="interview_results"
 )
 
 
@@ -1858,4 +1872,3 @@ else:
 
             except Exception as e:
                 st.error(f"❌ Could not save candidate history: {e}")
-                
