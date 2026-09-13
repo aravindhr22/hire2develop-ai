@@ -25,6 +25,23 @@ except Exception:
 
 
 # ============================================================
+# SUPABASE CONNECTION
+# ============================================================
+
+from supabase import create_client
+
+supabase = None
+
+try:
+    supabase = create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_KEY"]
+    )
+except Exception as e:
+    st.warning(f"Supabase history is unavailable: {e}")
+
+
+# ============================================================
 # DOCUMENT TEXT EXTRACTION
 # ============================================================
 
@@ -265,6 +282,113 @@ st.divider()
 
 
 # ============================================================
+# CANDIDATE HISTORY SIDEBAR
+# ============================================================
+
+if supabase is not None:
+    st.sidebar.markdown("## 🗂 Candidate History")
+
+    try:
+        history_response = (
+            supabase
+            .table("candidates")
+            .select("id,candidate_name,position,progress,updated_at")
+            .order("updated_at", desc=True)
+            .execute()
+        )
+
+        history_rows = history_response.data or []
+
+        if history_rows:
+            history_labels = [
+                f"{row['candidate_name']} — {row['position']}"
+                for row in history_rows
+            ]
+
+            selected_label = st.sidebar.selectbox(
+                "Select a saved candidate",
+                history_labels,
+                key="history_selector"
+            )
+
+            selected_index = history_labels.index(selected_label)
+            selected_candidate_id = history_rows[selected_index]["id"]
+
+            if st.sidebar.button(
+                "📂 Load Candidate",
+                use_container_width=True
+            ):
+                full_response = (
+                    supabase
+                    .table("candidates")
+                    .select("*")
+                    .eq("id", selected_candidate_id)
+                    .limit(1)
+                    .execute()
+                )
+
+                if full_response.data:
+                    row = full_response.data[0]
+
+                    st.session_state["candidate_id"] = row["id"]
+                    st.session_state["candidate_name"] = row.get("candidate_name", "") or ""
+                    st.session_state["position"] = row.get("position", "") or ""
+                    st.session_state["job_text"] = row.get("job_description", "") or ""
+                    st.session_state["resume_text"] = row.get("resume_text", "") or ""
+                    st.session_state["interview_results"] = row.get("interview_results", "") or ""
+
+                    saved_outputs = {
+                        "analysis": "candidate_analysis",
+                        "onboarding": "onboarding_plan",
+                        "skillgap": "skill_gap_analysis",
+                        "learning": "learning_plan",
+                        "progress_review": "progress_review"
+                    }
+
+                    for session_key, database_key in saved_outputs.items():
+                        saved_value = row.get(database_key)
+                        if saved_value:
+                            st.session_state[session_key] = saved_value
+                        else:
+                            st.session_state.pop(session_key, None)
+
+                    saved_progress = row.get("progress") or 0
+                    st.session_state["saved_progress"] = int(saved_progress)
+                    st.session_state["development_progress"] = int(saved_progress)
+
+                    st.session_state.pop("job_description", None)
+                    st.session_state.pop("resume", None)
+
+                    st.rerun()
+                else:
+                    st.sidebar.error("Could not load the selected candidate.")
+
+            st.sidebar.caption(
+                "Select a candidate and load their saved AI analysis, onboarding, "
+                "skill gaps, learning plan and progress."
+            )
+        else:
+            st.sidebar.info("No saved candidates yet.")
+
+        if st.sidebar.button(
+            "➕ Start New Candidate",
+            use_container_width=True
+        ):
+            for key in [
+                "candidate_id", "candidate_name", "position",
+                "job_text", "resume_text", "interview_results",
+                "analysis", "onboarding", "skillgap", "learning",
+                "progress_review", "saved_progress", "development_progress",
+                "job_description", "resume"
+            ]:
+                st.session_state.pop(key, None)
+            st.rerun()
+
+    except Exception as e:
+        st.sidebar.error(f"Could not load candidate history: {e}")
+
+
+# ============================================================
 # WORKFLOW
 # ============================================================
 
@@ -294,6 +418,22 @@ st.divider()
 # ============================================================
 
 st.markdown("### 📋 Candidate Analysis")
+
+profile_col1, profile_col2 = st.columns(2)
+
+with profile_col1:
+    candidate_name = st.text_input(
+        "Candidate Name",
+        value=st.session_state.get("candidate_name", ""),
+        key="candidate_name"
+    )
+
+with profile_col2:
+    position = st.text_input(
+        "Position",
+        value=st.session_state.get("position", ""),
+        key="position"
+    )
 
 col1, col2 = st.columns(2)
 
@@ -382,15 +522,15 @@ if st.button(
             "🤖 AI is analyzing the candidate..."
         ):
 
-job_text = extract_text(job_description)
-resume_text = extract_text(resume)
+            job_text = extract_text(job_description)
+            resume_text = extract_text(resume)
 
-# Store candidate source data for history
-st.session_state["job_text"] = job_text
-st.session_state["resume_text"] = resume_text
-st.session_state["interview_results"] = interview_results
+            # Store candidate source data for history
+            st.session_state["job_text"] = job_text
+            st.session_state["resume_text"] = resume_text
+            st.session_state["interview_results"] = interview_results
 
-if not job_text:
+            if not job_text:
                 st.error(
                     "Could not extract text from the Job Description."
                 )
@@ -477,9 +617,15 @@ if "analysis" in st.session_state:
 
         try:
 
-            # Extract the uploaded documents again
-            onboarding_job_text = extract_text(job_description)
-            onboarding_resume_text = extract_text(resume)
+            # Use saved candidate data when continuing from history.
+            onboarding_job_text = (
+                st.session_state.get("job_text")
+                or extract_text(job_description)
+            )
+            onboarding_resume_text = (
+                st.session_state.get("resume_text")
+                or extract_text(resume)
+            )
 
             onboarding_prompt = f"""
 You are an AI assistant supporting Human Resources professionals.
@@ -622,9 +768,15 @@ if "analysis" in st.session_state:
 
         try:
 
-            # Extract the uploaded documents again
-            skillgap_job_text = extract_text(job_description)
-            skillgap_resume_text = extract_text(resume)
+            # Use saved candidate data when continuing from history.
+            skillgap_job_text = (
+                st.session_state.get("job_text")
+                or extract_text(job_description)
+            )
+            skillgap_resume_text = (
+                st.session_state.get("resume_text")
+                or extract_text(resume)
+            )
 
             skillgap_prompt = f"""
 You are an AI-powered Talent Development assistant supporting HR professionals.
@@ -908,9 +1060,12 @@ if "learning" in st.session_state:
         "Overall Development Progress (%)",
         min_value=0,
         max_value=100,
-        value=25,
-        step=5
+        value=st.session_state.get("saved_progress", 25),
+        step=5,
+        key="development_progress"
     )
+
+    st.session_state["saved_progress"] = progress
 
     col1, col2 = st.columns(2)
 
@@ -1092,39 +1247,54 @@ st.write(
     "to onboarding and continuous development."
 )
 
-# Extract basic candidate/job information
-dashboard_candidate = "Candidate"
-dashboard_job = "Target Role"
+# Extract basic candidate/job information.
+# Prefer saved profile/history values when available.
+dashboard_candidate = st.session_state.get("candidate_name", "").strip()
+dashboard_job = st.session_state.get("position", "").strip()
 
-try:
-    dashboard_resume_text = extract_text(resume)
+if not dashboard_candidate:
+    dashboard_candidate = "Candidate"
 
-    name_match = re.search(
-        r"(?:Name|Candidate Name)\s*[:\-]\s*([A-Za-z .]+)",
-        dashboard_resume_text,
-        re.IGNORECASE
-    )
+if not dashboard_job:
+    dashboard_job = "Target Role"
 
-    if name_match:
-        dashboard_candidate = name_match.group(1).strip()
+if dashboard_candidate == "Candidate":
+    try:
+        dashboard_resume_text = (
+            st.session_state.get("resume_text")
+            or extract_text(resume)
+        )
 
-except Exception:
-    pass
+        name_match = re.search(
+            r"(?:Name|Candidate Name)\s*[:\-]\s*([A-Za-z .]+)",
+            dashboard_resume_text,
+            re.IGNORECASE
+        )
 
-try:
-    dashboard_job_text = extract_text(job_description)
+        if name_match:
+            dashboard_candidate = name_match.group(1).strip()
 
-    role_match = re.search(
-        r"(?:Position|Role|Job Title)\s*[:\-]\s*([A-Za-z &/\-]+)",
-        dashboard_job_text,
-        re.IGNORECASE
-    )
+    except Exception:
+        pass
 
-    if role_match:
-        dashboard_job = role_match.group(1).strip()
+if dashboard_job == "Target Role":
+    try:
+        dashboard_job_text = (
+            st.session_state.get("job_text")
+            or extract_text(job_description)
+        )
 
-except Exception:
-    pass
+        role_match = re.search(
+            r"(?:Position|Role|Job Title)\s*[:\-]\s*([A-Za-z &/\-]+)",
+            dashboard_job_text,
+            re.IGNORECASE
+        )
+
+        if role_match:
+            dashboard_job = role_match.group(1).strip()
+
+    except Exception:
+        pass
 
 
 # Determine current workflow status
@@ -1595,28 +1765,97 @@ else:
     st.info(
         "Complete Candidate Analysis first to enable the HR Report."
     )
+
+
 # ============================================================
-# SUPABASE DATABASE CONNECTION TEST
+# SAVE / UPDATE CANDIDATE HISTORY
 # ============================================================
 
-from supabase import create_client
+st.divider()
+st.markdown("## 💾 Save Candidate to History")
 
-try:
-    supabase = create_client(
-        st.secrets["SUPABASE_URL"],
-        st.secrets["SUPABASE_KEY"]
-    )
+st.write(
+    "Save this candidate's current HR journey to Supabase so it can be "
+    "opened and continued later."
+)
 
-    # Test database connection
-    test_response = (
-        supabase
-        .table("candidates")
-        .select("id")
-        .limit(1)
-        .execute()
-    )
+if supabase is None:
+    st.warning("Supabase is not connected, so candidate history is unavailable.")
+else:
+    if st.button(
+        "💾 Save Candidate to History",
+        type="primary",
+        use_container_width=True
+    ):
+        save_name = st.session_state.get("candidate_name", "").strip()
+        save_position = st.session_state.get("position", "").strip()
 
-    st.success("✅ Supabase database connected successfully!")
+        if not save_name:
+            st.warning("Please enter the Candidate Name above.")
+        elif not save_position:
+            st.warning("Please enter the Position above.")
+        elif not st.session_state.get("job_text"):
+            st.warning(
+                "Please analyze the candidate first so the Job Description is saved."
+            )
+        elif not st.session_state.get("resume_text"):
+            st.warning(
+                "Please analyze the candidate first so the Resume is saved."
+            )
+        else:
+            candidate_data = {
+                "candidate_name": save_name,
+                "position": save_position,
+                "job_description": st.session_state.get("job_text", ""),
+                "resume_text": st.session_state.get("resume_text", ""),
+                "interview_results": st.session_state.get("interview_results", ""),
+                "candidate_analysis": st.session_state.get("analysis", ""),
+                "onboarding_plan": st.session_state.get("onboarding", ""),
+                "skill_gap_analysis": st.session_state.get("skillgap", ""),
+                "learning_plan": st.session_state.get("learning", ""),
+                "progress_review": st.session_state.get("progress_review", ""),
+                "progress": int(
+                    st.session_state.get("development_progress", 0)
+                )
+            }
 
-except Exception as e:
-    st.error(f"❌ Supabase connection error: {e}")
+            try:
+                existing_id = st.session_state.get("candidate_id")
+
+                if existing_id:
+                    response = (
+                        supabase
+                        .table("candidates")
+                        .update(candidate_data)
+                        .eq("id", existing_id)
+                        .execute()
+                    )
+
+                    if response.data:
+                        st.success(
+                            f"✅ {save_name}'s history was updated successfully."
+                        )
+                    else:
+                        st.warning(
+                            "No row was updated. The candidate may no longer exist "
+                            "in Supabase."
+                        )
+                else:
+                    response = (
+                        supabase
+                        .table("candidates")
+                        .insert(candidate_data)
+                        .execute()
+                    )
+
+                    if response.data:
+                        st.session_state["candidate_id"] = response.data[0]["id"]
+                        st.success(
+                            f"✅ {save_name} was saved to candidate history successfully."
+                        )
+                    else:
+                        st.error("The candidate could not be saved.")
+
+            except Exception as e:
+                st.error(f"❌ Could not save candidate history: {e}")
+                
