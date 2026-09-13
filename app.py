@@ -1058,3 +1058,537 @@ if "progress_review" in st.session_state:
         "AI identifies potential development needs. "
         "HR and managers should validate the findings before taking action."
     )
+# ============================================================
+# STAGES 8-11 - PROFESSIONAL HR DASHBOARD
+# ============================================================
+
+import io
+import re
+from xml.sax.saxutils import escape
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    PageBreak
+)
+
+
+# ============================================================
+# STAGE 8 - PROFESSIONAL DASHBOARD
+# ============================================================
+
+st.divider()
+
+st.markdown("## 🏢 Hire2Develop HR Dashboard")
+
+st.write(
+    "A consolidated view of the candidate's journey from talent acquisition "
+    "to onboarding and continuous development."
+)
+
+# Extract basic candidate/job information
+dashboard_candidate = "Candidate"
+dashboard_job = "Target Role"
+
+try:
+    dashboard_resume_text = extract_text(resume)
+
+    name_match = re.search(
+        r"(?:Name|Candidate Name)\s*[:\-]\s*([A-Za-z .]+)",
+        dashboard_resume_text,
+        re.IGNORECASE
+    )
+
+    if name_match:
+        dashboard_candidate = name_match.group(1).strip()
+
+except Exception:
+    pass
+
+try:
+    dashboard_job_text = extract_text(job_description)
+
+    role_match = re.search(
+        r"(?:Position|Role|Job Title)\s*[:\-]\s*([A-Za-z &/\-]+)",
+        dashboard_job_text,
+        re.IGNORECASE
+    )
+
+    if role_match:
+        dashboard_job = role_match.group(1).strip()
+
+except Exception:
+    pass
+
+
+# Determine current workflow status
+analysis_done = "analysis" in st.session_state
+onboarding_done = "onboarding" in st.session_state
+skillgap_done = "skillgap" in st.session_state
+learning_done = "learning" in st.session_state
+progress_done = "progress_review" in st.session_state
+
+completed_stages = sum([
+    analysis_done,
+    onboarding_done,
+    skillgap_done,
+    learning_done,
+    progress_done
+])
+
+dashboard_progress = 0
+
+if "progress" in locals():
+    dashboard_progress = progress
+
+
+# Candidate information
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric(
+        "👤 Candidate",
+        dashboard_candidate
+    )
+
+with col2:
+    st.metric(
+        "💼 Target Role",
+        dashboard_job
+    )
+
+
+st.markdown("### 📊 Development Overview")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric(
+        "AI Analysis",
+        "Completed" if analysis_done else "Pending"
+    )
+
+with col2:
+    st.metric(
+        "Onboarding",
+        "Completed" if onboarding_done else "Pending"
+    )
+
+with col3:
+    st.metric(
+        "Learning Plan",
+        "Completed" if learning_done else "Pending"
+    )
+
+with col4:
+    st.metric(
+        "Development",
+        f"{dashboard_progress}%"
+    )
+
+
+# ============================================================
+# STAGE 9 - CONNECTED WORKFLOW
+# ============================================================
+
+st.markdown("### 🔄 Connected Hire-to-Develop Journey")
+
+workflow_status = [
+    ("1️⃣ Screening", analysis_done),
+    ("2️⃣ Job Matching", analysis_done),
+    ("3️⃣ Selection Insights", analysis_done),
+    ("4️⃣ Onboarding", onboarding_done),
+    ("5️⃣ Skill-Gap Analysis", skillgap_done),
+    ("6️⃣ Learning & Development", learning_done),
+    ("7️⃣ Progress Tracking", progress_done)
+]
+
+workflow_cols = st.columns(7)
+
+for index, (stage_name, completed) in enumerate(workflow_status):
+
+    with workflow_cols[index]:
+
+        if completed:
+            st.success(
+                f"✅\n\n{stage_name}"
+            )
+        else:
+            st.info(
+                f"⏳\n\n{stage_name}"
+            )
+
+
+st.markdown(
+    f"**AI Workflow Completion: {completed_stages}/5 major outputs completed**"
+)
+
+st.progress(completed_stages / 5)
+
+
+# ============================================================
+# STAGE 10 - FINAL HR DASHBOARD
+# ============================================================
+
+st.divider()
+
+st.markdown("## 📋 Final HR Talent Dashboard")
+
+if analysis_done:
+
+    st.markdown("### 👤 Candidate Summary")
+
+    summary_col1, summary_col2 = st.columns(2)
+
+    with summary_col1:
+
+        st.write("**Candidate:**", dashboard_candidate)
+        st.write("**Target Role:**", dashboard_job)
+
+    with summary_col2:
+
+        if onboarding_done:
+            onboarding_status = "✅ Generated"
+        else:
+            onboarding_status = "⏳ Pending"
+
+        if skillgap_done:
+            skillgap_status = "✅ Completed"
+        else:
+            skillgap_status = "⏳ Pending"
+
+        st.write("**Onboarding:**", onboarding_status)
+        st.write("**Skill-Gap Analysis:**", skillgap_status)
+
+
+    st.markdown("### 🧠 AI Decision-Support Summary")
+
+    if analysis_done:
+
+        st.success(
+            "AI Candidate Analysis Available"
+        )
+
+        st.write(
+            "The system has analyzed the candidate against the job "
+            "requirements and interview/assessment information."
+        )
+
+    if skillgap_done:
+
+        st.warning(
+            "Development priorities have been identified."
+        )
+
+    if learning_done:
+
+        st.info(
+            "A personalized Learning & Development plan has been generated."
+        )
+
+    if progress_done:
+
+        if dashboard_progress >= 70:
+
+            st.success(
+                f"🟢 Development Status: Strong Progress ({dashboard_progress}%)"
+            )
+
+        elif dashboard_progress >= 40:
+
+            st.warning(
+                f"🟡 Development Status: Needs Attention ({dashboard_progress}%)"
+            )
+
+        else:
+
+            st.error(
+                f"🔴 Development Status: Requires Support ({dashboard_progress}%)"
+            )
+
+
+else:
+
+    st.info(
+        "Complete Candidate Analysis to activate the HR Dashboard."
+    )
+
+
+# ============================================================
+# STAGE 11 - DOWNLOADABLE HR REPORT
+# ============================================================
+
+st.divider()
+
+st.markdown("## 📄 Download HR Talent Report")
+
+st.write(
+    "Generate a consolidated PDF report containing the AI candidate "
+    "analysis, onboarding plan, skill-gap analysis, learning plan "
+    "and development progress review."
+)
+
+
+def create_hr_report():
+
+    buffer = io.BytesIO()
+
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = styles["Title"]
+    title_style.alignment = TA_CENTER
+
+    heading_style = styles["Heading2"]
+    body_style = styles["BodyText"]
+
+    story = []
+
+    # Report title
+    story.append(
+        Paragraph(
+            "Hire2Develop AI - HR Talent Report",
+            title_style
+        )
+    )
+
+    story.append(Spacer(1, 15))
+
+    story.append(
+        Paragraph(
+            f"<b>Candidate:</b> {escape(dashboard_candidate)}",
+            body_style
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"<b>Target Role:</b> {escape(dashboard_job)}",
+            body_style
+        )
+    )
+
+    story.append(Spacer(1, 20))
+
+
+    # Candidate Analysis
+    if "analysis" in st.session_state:
+
+        story.append(
+            Paragraph(
+                "1. AI Candidate Analysis",
+                heading_style
+            )
+        )
+
+        analysis_text = st.session_state["analysis"]
+
+        for line in analysis_text.split("\n"):
+
+            clean_line = line.strip()
+
+            if clean_line:
+
+                story.append(
+                    Paragraph(
+                        escape(clean_line),
+                        body_style
+                    )
+                )
+
+                story.append(Spacer(1, 4))
+
+
+    # Onboarding
+    if "onboarding" in st.session_state:
+
+        story.append(PageBreak())
+
+        story.append(
+            Paragraph(
+                "2. Personalized Onboarding Plan",
+                heading_style
+            )
+        )
+
+        onboarding_text = st.session_state["onboarding"]
+
+        for line in onboarding_text.split("\n"):
+
+            clean_line = line.strip()
+
+            if clean_line:
+
+                story.append(
+                    Paragraph(
+                        escape(clean_line),
+                        body_style
+                    )
+                )
+
+                story.append(Spacer(1, 4))
+
+
+    # Skill Gap
+    if "skillgap" in st.session_state:
+
+        story.append(PageBreak())
+
+        story.append(
+            Paragraph(
+                "3. Skill-Gap Analysis",
+                heading_style
+            )
+        )
+
+        skillgap_text = st.session_state["skillgap"]
+
+        for line in skillgap_text.split("\n"):
+
+            clean_line = line.strip()
+
+            if clean_line:
+
+                story.append(
+                    Paragraph(
+                        escape(clean_line),
+                        body_style
+                    )
+                )
+
+                story.append(Spacer(1, 4))
+
+
+    # Learning
+    if "learning" in st.session_state:
+
+        story.append(PageBreak())
+
+        story.append(
+            Paragraph(
+                "4. Learning & Development Plan",
+                heading_style
+            )
+        )
+
+        learning_text = st.session_state["learning"]
+
+        for line in learning_text.split("\n"):
+
+            clean_line = line.strip()
+
+            if clean_line:
+
+                story.append(
+                    Paragraph(
+                        escape(clean_line),
+                        body_style
+                    )
+                )
+
+                story.append(Spacer(1, 4))
+
+
+    # Progress
+    if "progress_review" in st.session_state:
+
+        story.append(PageBreak())
+
+        story.append(
+            Paragraph(
+                "5. Development Progress Review",
+                heading_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                f"<b>Current Development Progress:</b> "
+                f"{dashboard_progress}%",
+                body_style
+            )
+        )
+
+        story.append(Spacer(1, 10))
+
+        progress_text = st.session_state["progress_review"]
+
+        for line in progress_text.split("\n"):
+
+            clean_line = line.strip()
+
+            if clean_line:
+
+                story.append(
+                    Paragraph(
+                        escape(clean_line),
+                        body_style
+                    )
+                )
+
+                story.append(Spacer(1, 4))
+
+
+    # Human oversight
+    story.append(PageBreak())
+
+    story.append(
+        Paragraph(
+            "6. Human Oversight & Responsible AI",
+            heading_style
+        )
+    )
+
+    story.append(
+        Paragraph(
+            "AI is used as a decision-support tool for HR and Talent "
+            "Development. Final hiring, onboarding and employee "
+            "development decisions remain with qualified human "
+            "HR professionals and managers.",
+            body_style
+        )
+    )
+
+    document.build(story)
+
+    buffer.seek(0)
+
+    return buffer
+
+
+if analysis_done:
+
+    try:
+
+        pdf_file = create_hr_report()
+
+        st.download_button(
+            label="📥 Download Complete HR Report (PDF)",
+            data=pdf_file,
+            file_name="Hire2Develop_HR_Talent_Report.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+
+    except Exception as e:
+
+        st.error(
+            f"Could not generate the HR report: {e}"
+        )
+
+else:
+
+    st.info(
+        "Complete Candidate Analysis first to enable the HR Report."
+    )
