@@ -292,29 +292,16 @@ if "candidate_form_version" not in st.session_state:
 
 def reset_candidate():
     """Clear the current candidate and prepare a completely fresh form."""
-
-    # Clear normal candidate/session data.
     for key in [
-        "candidate_id",
-        "job_text",
-        "resume_text",
-        "analysis",
-        "onboarding",
-        "skillgap",
-        "learning",
-        "progress_review",
-        "saved_progress",
-        "development_progress"
+        "candidate_id", "candidate_name", "position",
+        "job_text", "resume_text", "interview_results",
+        "analysis", "onboarding", "skillgap", "learning",
+        "progress_review", "saved_progress", "development_progress",
+        "history_selector"
     ]:
         st.session_state.pop(key, None)
 
-    # These are Streamlit widget keys. Setting them to blank is more reliable
-    # than deleting them when a button callback is used.
-    st.session_state["candidate_name"] = ""
-    st.session_state["position"] = ""
-    st.session_state["interview_results"] = ""
-
-    # Change the uploader keys so the old uploaded files are removed.
+    # Changing the uploader key guarantees that old uploaded files disappear.
     st.session_state["candidate_form_version"] += 1
 
 
@@ -403,13 +390,12 @@ if supabase is not None:
         else:
             st.sidebar.info("No saved candidates yet.")
 
-        if st.sidebar.button(
+        st.sidebar.button(
             "➕ Start New Candidate",
             use_container_width=True,
+            on_click=reset_candidate,
             key="start_new_candidate_button"
-        ):
-            reset_candidate()
-            st.rerun()
+        )
 
     except Exception as e:
         st.sidebar.error(f"Could not load candidate history: {e}")
@@ -488,6 +474,16 @@ with col2:
 
 st.markdown("#### 📝 Interview / Assessment Results")
 
+# Use a fresh widget key for each candidate/session so the text box
+# remains editable on every device and does not get stuck with an
+# old candidate's widget state.
+interview_widget_key = f"interview_results_{st.session_state['candidate_form_version']}"
+
+if interview_widget_key not in st.session_state:
+    st.session_state[interview_widget_key] = st.session_state.get(
+        "interview_results", ""
+    )
+
 interview_results = st.text_area(
     "Enter interview observations, assessment scores, "
     "or interviewer comments:",
@@ -502,8 +498,11 @@ interview_results = st.text_area(
         "but needs improvement in analytics."
     ),
     height=180,
-    key="interview_results"
+    key=interview_widget_key
 )
+
+# Keep the latest typed value available for analysis and history saving.
+st.session_state["interview_results"] = interview_results
 
 
 st.write("")
