@@ -1260,27 +1260,31 @@ from reportlab.platypus import (
     PageBreak
 )
 
+
 # ============================================================
 # STAGE 8 - PROFESSIONAL HR DASHBOARD
 # ============================================================
 
 st.divider()
+
 st.markdown("## 🏢 Hire2Develop HR Command Center")
-st.caption(
+st.write(
     "Candidate journey from AI-assisted hiring to personalized employee development."
 )
 
+# ------------------------------------------------------------
 # Candidate / role information
+# ------------------------------------------------------------
 dashboard_candidate = st.session_state.get("candidate_name", "").strip()
 dashboard_job = st.session_state.get("position", "").strip()
 
-if not addashboard_candidate:
-    addashboard_candidate = "Candidate"
+if not dashboard_candidate:
+    dashboard_candidate = "Candidate"
 
-if not addashboard_job:
-    addashboard_job = "Target Role"
+if not dashboard_job:
+    dashboard_job = "Target Role"
 
-if addashboard_candidate == "Candidate":
+if dashboard_candidate == "Candidate":
     try:
         dashboard_resume_text = (
             st.session_state.get("resume_text") or extract_text(resume)
@@ -1291,24 +1295,25 @@ if addashboard_candidate == "Candidate":
             re.IGNORECASE
         )
         if name_match:
-            addashboard_candidate = name_match.group(1).strip()
+            dashboard_candidate = name_match.group(1).strip()
     except Exception:
         pass
 
-if addashboard_job == "Target Role":
+if dashboard_job == "Target Role":
     try:
-        ddashboard_job_text = (
+        dashboard_job_text = (
             st.session_state.get("job_text") or extract_text(job_description)
         )
         role_match = re.search(
             r"(?:Position|Role|Job Title)\s*[:\-]\s*([A-Za-z &/\-]+)",
-            ddashboard_job_text,
+            dashboard_job_text,
             re.IGNORECASE
         )
         if role_match:
-            addashboard_job = role_match.group(1).strip()
+            dashboard_job = role_match.group(1).strip()
     except Exception:
         pass
+
 
 # Workflow state
 analysis_done = "analysis" in st.session_state
@@ -1332,29 +1337,34 @@ dashboard_progress = int(
     ) or 0
 )
 
-# ------------------------------------------------------------
-# Candidate snapshot
-# Native Streamlit components are deliberately used here so the
-# dashboard automatically follows Streamlit light/dark themes.
-# ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# Candidate Snapshot
+# Native Streamlit components are intentionally used here.
+# They automatically follow Light/Dark mode.
+# ------------------------------------------------------------
 st.markdown("### 👤 Candidate Snapshot")
+
 k1, k2, k3, k4 = st.columns(4)
 
 with k1:
-    st.metric("Candidate", addashboard_candidate)
+    st.metric("Candidate", dashboard_candidate)
+
 with k2:
-    st.metric("Target Role", addashboard_job)
+    st.metric("Target Role", dashboard_job)
+
 with k3:
     st.metric("AI Outputs Completed", f"{completed_stages} / 5")
+
 with k4:
     st.metric("Development Progress", f"{dashboard_progress}%")
 
-# ------------------------------------------------------------
-# Extract job-match scores
-# ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# Extract AI job-match scores
+# ------------------------------------------------------------
 analysis_text = st.session_state.get("analysis", "")
+
 
 def get_score(label):
     match = re.search(
@@ -1363,6 +1373,7 @@ def get_score(label):
         re.IGNORECASE
     )
     return int(match.group(1)) if match else None
+
 
 overall_match = get_score("Overall Match")
 skill_match = get_score("Skill Match")
@@ -1379,12 +1390,13 @@ for label, value in [
     if value is not None:
         fit_data.append({"metric": label, "score": value})
 
+
 # ------------------------------------------------------------
 # Extract interview competency scores
 # ------------------------------------------------------------
-
 interview_text = st.session_state.get("interview_results", "")
 interview_data = []
+
 score_pattern = re.compile(
     r"^\s*([^:\n]+?)\s*:\s*(\d+(?:\.\d+)?)\s*/\s*5\s*$",
     re.MULTILINE
@@ -1393,6 +1405,7 @@ score_pattern = re.compile(
 for match in score_pattern.finditer(interview_text):
     label = match.group(1).strip()
     score = float(match.group(2))
+
     if label.lower() not in {"overall observation", "overall score"}:
         level = (
             "Strong" if score >= 4
@@ -1404,22 +1417,23 @@ for match in score_pattern.finditer(interview_text):
             "level": level
         })
 
-# ------------------------------------------------------------
-# Talent insights: two charts side by side
-# ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# STAGE 9 - Talent Insights
+# ------------------------------------------------------------
 st.markdown("### 📊 Talent Insights")
 chart_left, chart_right = st.columns(2)
 
 with chart_left:
     st.markdown("#### 🎯 Candidate–Role Fit")
+
     if fit_data:
         st.vega_lite_chart(
             fit_data,
             {
                 "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-                "height": 250,
-                "mark": {"type": "bar", "cornerRadiusEnd": 7},
+                "height": 260,
+                "mark": {"type": "bar", "cornerRadiusEnd": 6},
                 "encoding": {
                     "y": {
                         "field": "metric",
@@ -1443,7 +1457,7 @@ with chart_left:
                                 "Experience Match",
                                 "Qualification Match"
                             ],
-                            "range": ["#2563eb", "#f59e0b", "#16a34a", "#7c3aed"]
+                            "range": ["#2563EB", "#F59E0B", "#16A34A", "#7C3AED"]
                         },
                         "legend": None
                     },
@@ -1453,24 +1467,26 @@ with chart_left:
                     ]
                 },
                 "config": {
-                    "view": {"stroke": None},
-                    "axis": {"gridOpacity": 0.2}
+                    "view": {"stroke": None}
                 }
             },
-            use_container_width=True
+            use_container_width=True,
+            theme="streamlit"
         )
     else:
         st.info("Complete AI Candidate Analysis to populate the fit chart.")
 
+
 with chart_right:
     st.markdown("#### 🧠 Interview Competency Profile")
+
     if interview_data:
         st.vega_lite_chart(
             interview_data,
             {
                 "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-                "height": 250,
-                "mark": {"type": "bar", "cornerRadiusEnd": 7},
+                "height": 260,
+                "mark": {"type": "bar", "cornerRadiusEnd": 6},
                 "encoding": {
                     "y": {
                         "field": "competency",
@@ -1489,34 +1505,40 @@ with chart_right:
                         "type": "nominal",
                         "scale": {
                             "domain": ["Strong", "Moderate", "Development Need"],
-                            "range": ["#16a34a", "#f59e0b", "#dc2626"]
+                            "range": ["#16A34A", "#F59E0B", "#DC2626"]
                         },
                         "legend": {"title": "Level"}
                     },
                     "tooltip": [
                         {"field": "competency", "type": "nominal", "title": "Competency"},
-                        {"field": "score", "type": "quantitative", "title": "Score (/5)", "format": ".1f"},
+                        {
+                            "field": "score",
+                            "type": "quantitative",
+                            "title": "Score (/5)",
+                            "format": ".1f"
+                        },
                         {"field": "level", "type": "nominal", "title": "Level"}
                     ]
                 },
                 "config": {
-                    "view": {"stroke": None},
-                    "axis": {"gridOpacity": 0.2}
+                    "view": {"stroke": None}
                 }
             },
-            use_container_width=True
+            use_container_width=True,
+            theme="streamlit"
         )
     else:
         st.info("Enter interview/assessment scores to populate the competency chart.")
 
-# ------------------------------------------------------------
-# Development status + donut chart
-# ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# Development progress donut + status
+# ------------------------------------------------------------
 progress_col, status_col = st.columns([1, 1])
 
 with progress_col:
     st.markdown("#### 🍩 Development Progress")
+
     progress_data = [
         {"status": "Completed", "value": dashboard_progress},
         {"status": "Remaining", "value": max(0, 100 - dashboard_progress)}
@@ -1526,8 +1548,8 @@ with progress_col:
         progress_data,
         {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "height": 240,
-            "mark": {"type": "arc", "innerRadius": 62, "outerRadius": 100},
+            "height": 250,
+            "mark": {"type": "arc", "innerRadius": 65, "outerRadius": 105},
             "encoding": {
                 "theta": {"field": "value", "type": "quantitative"},
                 "color": {
@@ -1535,126 +1557,144 @@ with progress_col:
                     "type": "nominal",
                     "scale": {
                         "domain": ["Completed", "Remaining"],
-                        "range": ["#2563eb", "#cbd5e1"]
+                        "range": ["#2563EB", "#CBD5E1"]
                     },
-                    "legend": {"title": None}
+                    "legend": {"orient": "bottom"}
                 },
                 "tooltip": [
                     {"field": "status", "type": "nominal", "title": "Status"},
-                    {"field": "value", "type": "quantitative", "title": "Percentage", "format": ".0f"}
+                    {"field": "value", "type": "quantitative", "title": "Progress (%)"}
                 ]
             },
-            "view": {"stroke": None}
+            "config": {
+                "view": {"stroke": None}
+            }
         },
-        use_container_width=True
+        use_container_width=True,
+        theme="streamlit"
     )
+
     st.metric("Current Development Progress", f"{dashboard_progress}%")
+
 
 with status_col:
     st.markdown("#### 🚦 Development Status")
+
     if dashboard_progress >= 70:
         st.success(f"🟢 Strong Progress — {dashboard_progress}%")
-        status_message = "The employee is progressing well against the development plan."
+        st.write("The employee is progressing well against the development plan.")
     elif dashboard_progress >= 40:
         st.warning(f"🟡 Needs Attention — {dashboard_progress}%")
-        status_message = "Some additional support or follow-up may be useful."
+        st.write("Some development areas may need additional follow-up.")
     else:
         st.error(f"🔴 Requires Support — {dashboard_progress}%")
-        status_message = "The employee may need closer manager/mentor support."
+        st.write("The employee may need closer manager/mentor support.")
 
-    st.info(status_message)
-
-    workflow_completion_pct = round((completed_stages / 5) * 100)
     st.markdown("#### 📌 Workflow Completion")
-    st.progress(workflow_completion_pct / 100)
-    st.caption(
-        f"{completed_stages}/5 major AI outputs completed ({workflow_completion_pct}%)"
+    st.progress(completed_stages / 5)
+    st.write(
+        f"**{completed_stages}/5 major AI outputs completed** "
+        f"({int(completed_stages / 5 * 100)}%)"
     )
 
-# ============================================================
-# STAGE 9 - CONNECTED WORKFLOW
-# ============================================================
-
-st.markdown("### 🔄 Connected Hire-to-Develop Journey")
-
-workflow_status = [
-    ("1️⃣ Screening", analysis_done),
-    ("2️⃣ Job Matching", analysis_done),
-    ("3️⃣ Selection Insights", analysis_done),
-    ("4️⃣ Onboarding", onboarding_done),
-    ("5️⃣ Skill-Gap Analysis", skillgap_done),
-    ("6️⃣ Learning & Development", learning_done),
-    ("7️⃣ Progress Tracking", progress_done)
-]
-
-workflow_cols = st.columns(7)
-
-for index, (stage_name, completed) in enumerate(workflow_status):
-    with workflow_cols[index]:
-        if completed:
-            st.success(f"✅\n\n{stage_name}")
-        else:
-            st.info(f"⏳\n\n{stage_name}")
 
 # ============================================================
 # STAGE 10 - FINAL HR DASHBOARD
 # ============================================================
 
-st.markdown("### 🧾 HR Decision-Support Overview")
+st.divider()
+st.markdown("## 📋 Final HR Talent Dashboard")
 
 if analysis_done:
+    # HR decision-support overview
+    st.markdown("### 🧾 HR Decision-Support Overview")
+
+    d1, d2, d3 = st.columns(3)
+
+    with d1:
+        st.metric(
+            "🎯 Overall Job Match",
+            f"{overall_match}%" if overall_match is not None else "—"
+        )
+
+    with d2:
+        st.metric(
+            "📊 Skill Match",
+            f"{skill_match}%" if skill_match is not None else "—"
+        )
+
+    with d3:
+        st.metric(
+            "🧩 Skill Gaps",
+            "Identified" if skillgap_done else "Pending"
+        )
+
+    st.markdown("### 👤 Candidate Summary")
+    s1, s2 = st.columns(2)
+
+    with s1:
+        st.write(f"**Candidate:** {dashboard_candidate}")
+        st.write(f"**Target Role:** {dashboard_job}")
+
+    with s2:
+        st.write(f"**Onboarding:** {'✅ Generated' if onboarding_done else '⏳ Pending'}")
+        st.write(f"**Learning Plan:** {'✅ Generated' if learning_done else '⏳ Pending'}")
+
+    # Selection support extracted from AI output
     recommendation_match = re.search(
         r"Recommendation\s*:\s*(.+)",
         analysis_text,
         re.IGNORECASE
     )
-    recommendation = (
-        recommendation_match.group(1).strip()
-        if recommendation_match
-        else "See AI Candidate Analysis"
-    )
 
-    d1, d2, d3 = st.columns(3)
+    if recommendation_match:
+        recommendation = recommendation_match.group(1).strip()
+        st.info(f"🤖 **AI Selection Support:** {recommendation}")
 
-    with d1:
-        st.metric("🎯 AI Recommendation", recommendation)
+    st.markdown("### 🔄 Connected Hire-to-Develop Journey")
 
-    with d2:
-        match_display = f"{overall_match}%" if overall_match is not None else "N/A"
-        st.metric("📊 Overall Role Match", match_display)
+    workflow_status = [
+        ("1️⃣ Screening", analysis_done),
+        ("2️⃣ Job Matching", analysis_done),
+        ("3️⃣ Selection Insights", analysis_done),
+        ("4️⃣ Onboarding", onboarding_done),
+        ("5️⃣ Skill-Gap Analysis", skillgap_done),
+        ("6️⃣ Learning & Development", learning_done),
+        ("7️⃣ Progress Tracking", progress_done)
+    ]
 
-    with d3:
-        st.metric(
-            "🧩 Development Focus",
-            "Identified" if skillgap_done else "Pending"
-        )
+    workflow_cols = st.columns(7)
 
-    st.markdown("#### 📋 Recommended HR Action Summary")
+    for index, (stage_name, completed) in enumerate(workflow_status):
+        with workflow_cols[index]:
+            if completed:
+                st.success(f"✅\n\n{stage_name}")
+            else:
+                st.info(f"⏳\n\n{stage_name}")
 
-    action_items = []
-    if analysis_done:
-        action_items.append("Review AI screening and job-match insights.")
-    if skillgap_done:
-        action_items.append("Review high-priority skill gaps before finalizing development priorities.")
-    if onboarding_done:
-        action_items.append("Customize the 90-day onboarding plan with the reporting manager.")
-    if learning_done:
-        action_items.append("Assign or validate the recommended learning activities.")
-    if progress_done:
-        action_items.append("Review the latest development progress and manager feedback.")
+    st.markdown("### 📌 Recommended HR Actions")
 
-    for item in action_items:
-        st.markdown(f"• {item}")
+    actions = [
+        "Review AI screening and job-match insights before making the final hiring decision.",
+        "Review high-priority skill gaps before finalizing development priorities.",
+        "Customize the 90-day onboarding plan with the reporting manager.",
+        "Use progress reviews to provide additional coaching or support where required."
+    ]
 
+    for action in actions:
+        st.write(f"• {action}")
+
+    st.markdown("### 🛡️ Responsible AI")
     st.info(
-        "🛡️ Responsible AI: The dashboard is designed for HR decision support. "
-        "It should use job-relevant information only, avoid protected characteristics, "
-        "and keep final hiring and development decisions with qualified human professionals."
+        "AI is used as decision support. The system focuses on job-relevant information "
+        "and should not use protected characteristics. Final hiring, onboarding and "
+        "development decisions remain with qualified HR professionals and managers."
     )
+
 else:
     st.info("Complete Candidate Analysis to activate the HR Dashboard.")
 
-# ============================================================
+
 # STAGE 11 - DOWNLOADABLE HR REPORT
 # ============================================================
 
