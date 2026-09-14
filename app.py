@@ -1288,64 +1288,127 @@ st.divider()
 # command-center look.
 st.markdown("""
 <style>
+/* ============================================================
+   DARK/LIGHT MODE SAFE DASHBOARD STYLING
+   Uses Streamlit's theme variables instead of hard-coded white
+   backgrounds and dark text. This keeps the dashboard readable
+   in both light and dark mode.
+   ============================================================ */
 .dashboard-hero {
     padding: 22px 24px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #eef4ff 0%, #f8fbff 100%);
-    border: 1px solid #dbe7f7;
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.25);
     margin-bottom: 18px;
+    color: var(--text-color);
 }
-.dashboard-hero h2 { margin-bottom: 4px; }
+.dashboard-hero h2 {
+    margin-bottom: 4px;
+    color: var(--text-color) !important;
+}
 .kpi-card {
     padding: 16px;
     border-radius: 14px;
-    border: 1px solid #e3eaf3;
-    background: #ffffff;
-    box-shadow: 0 3px 12px rgba(31, 50, 81, 0.06);
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    background: var(--secondary-background-color);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
     min-height: 105px;
+    color: var(--text-color);
 }
 .kpi-label {
     font-size: 0.82rem;
-    color: #6b7280;
+    color: var(--text-color);
+    opacity: 0.72;
     margin-bottom: 5px;
 }
 .kpi-value {
     font-size: 1.35rem;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--text-color);
 }
 .section-card {
     padding: 18px 20px;
     border-radius: 14px;
-    border: 1px solid #e5eaf0;
-    background: #fbfcfe;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    background: var(--secondary-background-color);
+    color: var(--text-color);
     margin-top: 10px;
 }
 .journey-card {
     padding: 12px 10px;
     border-radius: 12px;
     text-align: center;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    background: var(--secondary-background-color);
+    color: var(--text-color);
     min-height: 92px;
 }
 .journey-done {
-    background: #eefaf3;
-    border-color: #b9e4ca;
+    background: rgba(22, 163, 74, 0.12);
+    border-color: rgba(22, 163, 74, 0.35);
 }
 .journey-pending {
-    background: #f7f9fc;
-    border-color: #e2e8f0;
+    background: var(--secondary-background-color);
+    border-color: rgba(128, 128, 128, 0.25);
 }
 .insight-card {
     padding: 15px;
     border-radius: 13px;
-    border: 1px solid #e4e9f0;
-    background: white;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    background: var(--secondary-background-color);
+    color: var(--text-color);
     min-height: 105px;
 }
+.insight-card b,
+.insight-card span {
+    color: var(--text-color);
+}
 .small-muted {
-    color: #6b7280;
+    color: var(--text-color);
+    opacity: 0.72;
     font-size: 0.86rem;
+}
+
+/* Vega-Lite charts: inherit the active Streamlit theme. */
+[data-testid="stVegaLiteChart"] {
+    background: transparent !important;
+    border-radius: 14px;
+}
+[data-testid="stVegaLiteChart"] text {
+    fill: var(--text-color) !important;
+}
+[data-testid="stVegaLiteChart"] .mark-text {
+    fill: var(--text-color) !important;
+}
+[data-testid="stVegaLiteChart"] .role-axis-grid {
+    stroke: rgba(128, 128, 128, 0.22) !important;
+}
+
+/* Streamlit alert/info boxes also look better with the active theme. */
+[data-testid="stAlert"] {
+    border-radius: 12px;
+}
+
+/* Extra protection for dark mode in browsers where CSS variables
+   are not inherited into SVG text immediately. */
+@media (prefers-color-scheme: dark) {
+    .dashboard-hero,
+    .kpi-card,
+    .section-card,
+    .journey-card,
+    .insight-card {
+        color: #f5f7fa;
+    }
+    .dashboard-hero h2,
+    .kpi-value,
+    .insight-card b,
+    .insight-card span {
+        color: #f5f7fa !important;
+    }
+    .kpi-label,
+    .small-muted {
+        color: #cbd5e1 !important;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -1556,8 +1619,15 @@ with chart_left:
                     ]
                 },
                 "config": {
+                    "background": "transparent",
                     "view": {"stroke": None},
-                    "axis": {"labelFontSize": 12, "titleFontSize": 12}
+                    "axis": {
+                        "labelFontSize": 12,
+                        "titleFontSize": 12,
+                        "labelColor": "#94a3b8",
+                        "titleColor": "#94a3b8",
+                        "gridColor": "#475569"
+                    }
                 }
             },
             use_container_width=True
@@ -1606,8 +1676,15 @@ with chart_right:
                     ]
                 },
                 "config": {
+                    "background": "transparent",
                     "view": {"stroke": None},
-                    "axis": {"labelFontSize": 12, "titleFontSize": 12}
+                    "axis": {
+                        "labelFontSize": 12,
+                        "titleFontSize": 12,
+                        "labelColor": "#94a3b8",
+                        "titleColor": "#94a3b8",
+                        "gridColor": "#475569"
+                    }
                 }
             },
             use_container_width=True
@@ -1656,7 +1733,8 @@ with progress_col:
                     {"field": "value", "type": "quantitative", "format": ".0f"}
                 ]
             },
-            "view": {"stroke": None}
+            "view": {"stroke": None},
+            "background": "transparent"
         },
         use_container_width=True
     )
