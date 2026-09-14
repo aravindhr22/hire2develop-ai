@@ -1244,25 +1244,7 @@ if "progress_review" in st.session_state:
         "HR and managers should validate the findings before taking action."
     )
 # ============================================================
-# STAGES 8-11 - PROFESSIONAL HR DASHBOARD
-# ============================================================
-
-import io
-import re
-from xml.sax.saxutils import escape
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.enums import TA_CENTER
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer,
-    PageBreak
-)
-
-
-# ============================================================
-# STAGES 8-10 - RICH HR DASHBOARD
+# STAGES 8-10 - PROFESSIONAL HR DASHBOARD
 # ============================================================
 
 import io
@@ -1283,152 +1265,25 @@ from reportlab.platypus import (
 # ============================================================
 
 st.divider()
+st.markdown("## 🏢 Hire2Develop HR Command Center")
+st.caption(
+    "Candidate journey from AI-assisted hiring to personalized employee development."
+)
 
-# Dashboard styling - keeps the app clean while adding a modern HR
-# command-center look.
-st.markdown("""
-<style>
-/* ============================================================
-   DARK/LIGHT MODE SAFE DASHBOARD STYLING
-   Uses Streamlit's theme variables instead of hard-coded white
-   backgrounds and dark text. This keeps the dashboard readable
-   in both light and dark mode.
-   ============================================================ */
-.dashboard-hero {
-    padding: 22px 24px;
-    border-radius: 16px;
-    background: var(--secondary-background-color);
-    border: 1px solid rgba(128, 128, 128, 0.25);
-    margin-bottom: 18px;
-    color: var(--text-color);
-}
-.dashboard-hero h2 {
-    margin-bottom: 4px;
-    color: var(--text-color) !important;
-}
-.kpi-card {
-    padding: 16px;
-    border-radius: 14px;
-    border: 1px solid rgba(128, 128, 128, 0.25);
-    background: var(--secondary-background-color);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-    min-height: 105px;
-    color: var(--text-color);
-}
-.kpi-label {
-    font-size: 0.82rem;
-    color: var(--text-color);
-    opacity: 0.72;
-    margin-bottom: 5px;
-}
-.kpi-value {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--text-color);
-}
-.section-card {
-    padding: 18px 20px;
-    border-radius: 14px;
-    border: 1px solid rgba(128, 128, 128, 0.25);
-    background: var(--secondary-background-color);
-    color: var(--text-color);
-    margin-top: 10px;
-}
-.journey-card {
-    padding: 12px 10px;
-    border-radius: 12px;
-    text-align: center;
-    border: 1px solid rgba(128, 128, 128, 0.25);
-    background: var(--secondary-background-color);
-    color: var(--text-color);
-    min-height: 92px;
-}
-.journey-done {
-    background: rgba(22, 163, 74, 0.12);
-    border-color: rgba(22, 163, 74, 0.35);
-}
-.journey-pending {
-    background: var(--secondary-background-color);
-    border-color: rgba(128, 128, 128, 0.25);
-}
-.insight-card {
-    padding: 15px;
-    border-radius: 13px;
-    border: 1px solid rgba(128, 128, 128, 0.25);
-    background: var(--secondary-background-color);
-    color: var(--text-color);
-    min-height: 105px;
-}
-.insight-card b,
-.insight-card span {
-    color: var(--text-color);
-}
-.small-muted {
-    color: var(--text-color);
-    opacity: 0.72;
-    font-size: 0.86rem;
-}
-
-/* Vega-Lite charts: inherit the active Streamlit theme. */
-[data-testid="stVegaLiteChart"] {
-    background: transparent !important;
-    border-radius: 14px;
-}
-[data-testid="stVegaLiteChart"] text {
-    fill: var(--text-color) !important;
-}
-[data-testid="stVegaLiteChart"] .mark-text {
-    fill: var(--text-color) !important;
-}
-[data-testid="stVegaLiteChart"] .role-axis-grid {
-    stroke: rgba(128, 128, 128, 0.22) !important;
-}
-
-/* Streamlit alert/info boxes also look better with the active theme. */
-[data-testid="stAlert"] {
-    border-radius: 12px;
-}
-
-/* Extra protection for dark mode in browsers where CSS variables
-   are not inherited into SVG text immediately. */
-@media (prefers-color-scheme: dark) {
-    .dashboard-hero,
-    .kpi-card,
-    .section-card,
-    .journey-card,
-    .insight-card {
-        color: #f5f7fa;
-    }
-    .dashboard-hero h2,
-    .kpi-value,
-    .insight-card b,
-    .insight-card span {
-        color: #f5f7fa !important;
-    }
-    .kpi-label,
-    .small-muted {
-        color: #cbd5e1 !important;
-    }
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Extract basic candidate/job information.
-# Prefer saved profile/history values when available.
+# Candidate / role information
 dashboard_candidate = st.session_state.get("candidate_name", "").strip()
 dashboard_job = st.session_state.get("position", "").strip()
 
-if not dashboard_candidate:
-    dashboard_candidate = "Candidate"
+if not addashboard_candidate:
+    addashboard_candidate = "Candidate"
 
-if not dashboard_job:
-    dashboard_job = "Target Role"
+if not addashboard_job:
+    addashboard_job = "Target Role"
 
-if dashboard_candidate == "Candidate":
+if addashboard_candidate == "Candidate":
     try:
         dashboard_resume_text = (
-            st.session_state.get("resume_text")
-            or extract_text(resume)
+            st.session_state.get("resume_text") or extract_text(resume)
         )
         name_match = re.search(
             r"(?:Name|Candidate Name)\s*[:\-]\s*([A-Za-z .]+)",
@@ -1436,26 +1291,26 @@ if dashboard_candidate == "Candidate":
             re.IGNORECASE
         )
         if name_match:
-            dashboard_candidate = name_match.group(1).strip()
+            addashboard_candidate = name_match.group(1).strip()
     except Exception:
         pass
 
-if dashboard_job == "Target Role":
+if addashboard_job == "Target Role":
     try:
-        dashboard_job_text = (
-            st.session_state.get("job_text")
-            or extract_text(job_description)
+        ddashboard_job_text = (
+            st.session_state.get("job_text") or extract_text(job_description)
         )
         role_match = re.search(
             r"(?:Position|Role|Job Title)\s*[:\-]\s*([A-Za-z &/\-]+)",
-            dashboard_job_text,
+            ddashboard_job_text,
             re.IGNORECASE
         )
         if role_match:
-            dashboard_job = role_match.group(1).strip()
+            addashboard_job = role_match.group(1).strip()
     except Exception:
         pass
 
+# Workflow state
 analysis_done = "analysis" in st.session_state
 onboarding_done = "onboarding" in st.session_state
 skillgap_done = "skillgap" in st.session_state
@@ -1470,63 +1325,33 @@ completed_stages = sum([
     progress_done
 ])
 
-dashboard_progress = int(st.session_state.get(
-    "development_progress",
-    st.session_state.get("saved_progress", 0)
-) or 0)
+dashboard_progress = int(
+    st.session_state.get(
+        "development_progress",
+        st.session_state.get("saved_progress", 0)
+    ) or 0
+)
 
 # ------------------------------------------------------------
-# Dashboard hero
+# Candidate snapshot
+# Native Streamlit components are deliberately used here so the
+# dashboard automatically follows Streamlit light/dark themes.
 # ------------------------------------------------------------
 
-st.markdown(f"""
-<div class="dashboard-hero">
-    <h2>🏢 Hire2Develop HR Command Center</h2>
-    <div class="small-muted">
-        Candidate journey from AI-assisted hiring to personalized employee development.
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Candidate profile cards
+st.markdown("### 👤 Candidate Snapshot")
 k1, k2, k3, k4 = st.columns(4)
 
 with k1:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">👤 Candidate</div>
-        <div class="kpi-value">{escape(dashboard_candidate)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.metric("Candidate", addashboard_candidate)
 with k2:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">💼 Target Role</div>
-        <div class="kpi-value">{escape(dashboard_job)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.metric("Target Role", addashboard_job)
 with k3:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">🔄 AI Outputs Completed</div>
-        <div class="kpi-value">{completed_stages} / 5</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.metric("AI Outputs Completed", f"{completed_stages} / 5")
 with k4:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">📈 Development Progress</div>
-        <div class="kpi-value">{dashboard_progress}%</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("### 📊 Talent Insights")
+    st.metric("Development Progress", f"{dashboard_progress}%")
 
 # ------------------------------------------------------------
-# Extract AI job-match scores for the bar chart.
+# Extract job-match scores
 # ------------------------------------------------------------
 
 analysis_text = st.session_state.get("analysis", "")
@@ -1555,11 +1380,10 @@ for label, value in [
         fit_data.append({"metric": label, "score": value})
 
 # ------------------------------------------------------------
-# Interview competency scores for the second bar chart.
+# Extract interview competency scores
 # ------------------------------------------------------------
 
 interview_text = st.session_state.get("interview_results", "")
-
 interview_data = []
 score_pattern = re.compile(
     r"^\s*([^:\n]+?)\s*:\s*(\d+(?:\.\d+)?)\s*/\s*5\s*$",
@@ -1570,14 +1394,21 @@ for match in score_pattern.finditer(interview_text):
     label = match.group(1).strip()
     score = float(match.group(2))
     if label.lower() not in {"overall observation", "overall score"}:
-        level = "Strong" if score >= 4 else ("Moderate" if score >= 3 else "Development Need")
+        level = (
+            "Strong" if score >= 4
+            else ("Moderate" if score >= 3 else "Development Need")
+        )
         interview_data.append({
             "competency": label,
             "score": score,
             "level": level
         })
 
-# Two rich chart panels
+# ------------------------------------------------------------
+# Talent insights: two charts side by side
+# ------------------------------------------------------------
+
+st.markdown("### 📊 Talent Insights")
 chart_left, chart_right = st.columns(2)
 
 with chart_left:
@@ -1587,16 +1418,13 @@ with chart_left:
             fit_data,
             {
                 "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-                "mark": {
-                    "type": "bar",
-                    "cornerRadiusEnd": 7,
-                    "size": 28
-                },
+                "height": 250,
+                "mark": {"type": "bar", "cornerRadiusEnd": 7},
                 "encoding": {
                     "y": {
                         "field": "metric",
                         "type": "nominal",
-                        "sort": "-x",
+                        "sort": {"field": "score", "order": "descending"},
                         "title": None
                     },
                     "x": {
@@ -1609,25 +1437,24 @@ with chart_left:
                         "field": "metric",
                         "type": "nominal",
                         "scale": {
-                            "range": ["#2563eb", "#16a34a", "#7c3aed", "#f59e0b"]
+                            "domain": [
+                                "Overall Match",
+                                "Skill Match",
+                                "Experience Match",
+                                "Qualification Match"
+                            ],
+                            "range": ["#2563eb", "#f59e0b", "#16a34a", "#7c3aed"]
                         },
                         "legend": None
                     },
                     "tooltip": [
-                        {"field": "metric", "type": "nominal"},
-                        {"field": "score", "type": "quantitative", "format": ".0f"}
+                        {"field": "metric", "type": "nominal", "title": "Metric"},
+                        {"field": "score", "type": "quantitative", "title": "Score (%)"}
                     ]
                 },
                 "config": {
-                    "background": "transparent",
                     "view": {"stroke": None},
-                    "axis": {
-                        "labelFontSize": 12,
-                        "titleFontSize": 12,
-                        "labelColor": "#94a3b8",
-                        "titleColor": "#94a3b8",
-                        "gridColor": "#475569"
-                    }
+                    "axis": {"gridOpacity": 0.2}
                 }
             },
             use_container_width=True
@@ -1642,16 +1469,13 @@ with chart_right:
             interview_data,
             {
                 "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-                "mark": {
-                    "type": "bar",
-                    "cornerRadiusEnd": 7,
-                    "size": 25
-                },
+                "height": 250,
+                "mark": {"type": "bar", "cornerRadiusEnd": 7},
                 "encoding": {
                     "y": {
                         "field": "competency",
                         "type": "nominal",
-                        "sort": "-x",
+                        "sort": {"field": "score", "order": "descending"},
                         "title": None
                     },
                     "x": {
@@ -1667,24 +1491,17 @@ with chart_right:
                             "domain": ["Strong", "Moderate", "Development Need"],
                             "range": ["#16a34a", "#f59e0b", "#dc2626"]
                         },
-                        "legend": {"title": "Competency Level"}
+                        "legend": {"title": "Level"}
                     },
                     "tooltip": [
-                        {"field": "competency", "type": "nominal"},
-                        {"field": "score", "type": "quantitative", "format": ".1f"},
-                        {"field": "level", "type": "nominal"}
+                        {"field": "competency", "type": "nominal", "title": "Competency"},
+                        {"field": "score", "type": "quantitative", "title": "Score (/5)", "format": ".1f"},
+                        {"field": "level", "type": "nominal", "title": "Level"}
                     ]
                 },
                 "config": {
-                    "background": "transparent",
                     "view": {"stroke": None},
-                    "axis": {
-                        "labelFontSize": 12,
-                        "titleFontSize": 12,
-                        "labelColor": "#94a3b8",
-                        "titleColor": "#94a3b8",
-                        "gridColor": "#475569"
-                    }
+                    "axis": {"gridOpacity": 0.2}
                 }
             },
             use_container_width=True
@@ -1693,7 +1510,7 @@ with chart_right:
         st.info("Enter interview/assessment scores to populate the competency chart.")
 
 # ------------------------------------------------------------
-# Development Progress Donut
+# Development status + donut chart
 # ------------------------------------------------------------
 
 progress_col, status_col = st.columns([1, 1])
@@ -1709,35 +1526,29 @@ with progress_col:
         progress_data,
         {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "mark": {
-                "type": "arc",
-                "innerRadius": 62,
-                "outerRadius": 105
-            },
+            "height": 240,
+            "mark": {"type": "arc", "innerRadius": 62, "outerRadius": 100},
             "encoding": {
-                "theta": {
-                    "field": "value",
-                    "type": "quantitative"
-                },
+                "theta": {"field": "value", "type": "quantitative"},
                 "color": {
                     "field": "status",
                     "type": "nominal",
                     "scale": {
                         "domain": ["Completed", "Remaining"],
-                        "range": ["#2563eb", "#e8edf5"]
+                        "range": ["#2563eb", "#cbd5e1"]
                     },
                     "legend": {"title": None}
                 },
                 "tooltip": [
-                    {"field": "status", "type": "nominal"},
-                    {"field": "value", "type": "quantitative", "format": ".0f"}
+                    {"field": "status", "type": "nominal", "title": "Status"},
+                    {"field": "value", "type": "quantitative", "title": "Percentage", "format": ".0f"}
                 ]
             },
-            "view": {"stroke": None},
-            "background": "transparent"
+            "view": {"stroke": None}
         },
         use_container_width=True
     )
+    st.metric("Current Development Progress", f"{dashboard_progress}%")
 
 with status_col:
     st.markdown("#### 🚦 Development Status")
@@ -1751,18 +1562,13 @@ with status_col:
         st.error(f"🔴 Requires Support — {dashboard_progress}%")
         status_message = "The employee may need closer manager/mentor support."
 
-    st.markdown(
-        f'<div class="section-card"><b>HR Interpretation</b><br>'
-        f'<span class="small-muted">{status_message}</span></div>',
-        unsafe_allow_html=True
-    )
+    st.info(status_message)
 
-    st.markdown("#### 📌 Workflow Completion")
     workflow_completion_pct = round((completed_stages / 5) * 100)
+    st.markdown("#### 📌 Workflow Completion")
     st.progress(workflow_completion_pct / 100)
     st.caption(
-        f"{completed_stages}/5 major AI outputs completed "
-        f"({workflow_completion_pct}%)"
+        f"{completed_stages}/5 major AI outputs completed ({workflow_completion_pct}%)"
     )
 
 # ============================================================
@@ -1785,17 +1591,10 @@ workflow_cols = st.columns(7)
 
 for index, (stage_name, completed) in enumerate(workflow_status):
     with workflow_cols[index]:
-        card_class = "journey-done" if completed else "journey-pending"
-        icon = "✅" if completed else "⏳"
-        st.markdown(
-            f'<div class="journey-card {card_class}">'
-            f'<div style="font-size:1.3rem">{icon}</div>'
-            f'<div style="font-size:0.82rem;font-weight:600">{stage_name}</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-
-st.markdown("")
+        if completed:
+            st.success(f"✅\n\n{stage_name}")
+        else:
+            st.info(f"⏳\n\n{stage_name}")
 
 # ============================================================
 # STAGE 10 - FINAL HR DASHBOARD
@@ -1804,7 +1603,6 @@ st.markdown("")
 st.markdown("### 🧾 HR Decision-Support Overview")
 
 if analysis_done:
-
     recommendation_match = re.search(
         r"Recommendation\s*:\s*(.+)",
         analysis_text,
@@ -1816,36 +1614,19 @@ if analysis_done:
         else "See AI Candidate Analysis"
     )
 
-    # Decision-support metrics
     d1, d2, d3 = st.columns(3)
 
     with d1:
-        st.markdown(
-            f'<div class="insight-card">'
-            f'<b>🎯 AI Recommendation</b><br>'
-            f'<span style="font-size:1.05rem">{escape(recommendation)}</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        st.metric("🎯 AI Recommendation", recommendation)
 
     with d2:
         match_display = f"{overall_match}%" if overall_match is not None else "N/A"
-        st.markdown(
-            f'<div class="insight-card">'
-            f'<b>📊 Overall Role Match</b><br>'
-            f'<span style="font-size:1.5rem;font-weight:700">{match_display}</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        st.metric("📊 Overall Role Match", match_display)
 
     with d3:
-        st.markdown(
-            f'<div class="insight-card">'
-            f'<b>🧩 Development Focus</b><br>'
-            f'<span class="small-muted">'
-            f'{"Skill gaps identified" if skillgap_done else "Pending skill-gap analysis"}'
-            f'</span></div>',
-            unsafe_allow_html=True
+        st.metric(
+            "🧩 Development Focus",
+            "Identified" if skillgap_done else "Pending"
         )
 
     st.markdown("#### 📋 Recommended HR Action Summary")
@@ -1862,16 +1643,14 @@ if analysis_done:
     if progress_done:
         action_items.append("Review the latest development progress and manager feedback.")
 
-    if action_items:
-        for item in action_items:
-            st.markdown(f"• {item}")
+    for item in action_items:
+        st.markdown(f"• {item}")
 
     st.info(
         "🛡️ Responsible AI: The dashboard is designed for HR decision support. "
         "It should use job-relevant information only, avoid protected characteristics, "
         "and keep final hiring and development decisions with qualified human professionals."
     )
-
 else:
     st.info("Complete Candidate Analysis to activate the HR Dashboard.")
 
